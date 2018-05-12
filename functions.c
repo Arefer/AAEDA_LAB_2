@@ -16,9 +16,11 @@
 Nodo* crearNodo(Nodo* padre, char* nombreConsultorio, char* especialidad,
 	int pacientesMaximos, int pacientesActuales, int tiempoAcumulado){
 	Nodo* nuevoNodo = (Nodo*)malloc(sizeof(Nodo));
+	nuevoNodo->nombreConsultorio = (char*)malloc(sizeof(char)*(strlen(nombreConsultorio)+1));
+	nuevoNodo->especialidad = (char*)malloc(sizeof(char)*(strlen(especialidad)+1));
 	nuevoNodo->padre = padre;
-	nuevoNodo->nombreConsultorio = nombreConsultorio;
-	nuevoNodo->especialidad = especialidad;
+	strcpy(nuevoNodo->nombreConsultorio, nombreConsultorio);
+	strcpy(nuevoNodo->especialidad, especialidad);
 	nuevoNodo->pacientesMaximos = pacientesMaximos;
 	nuevoNodo->pacientesActuales = pacientesActuales;
 	nuevoNodo->tiempoAcumulado = tiempoAcumulado;
@@ -33,7 +35,7 @@ Nodo* crearNodo(Nodo* padre, char* nombreConsultorio, char* especialidad,
 */
 Nodo* buscarNodo(char* nombreNodo, Grafo* g){
 	for (int i = 0; i < g->numNodos; i++){
-		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, nombreNodo) == 1){
+		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, nombreNodo) == 0){
 			return g->matrizAdyacencia[i]->origen;
 		}
 	}
@@ -49,7 +51,8 @@ Nodo* buscarNodo(char* nombreNodo, Grafo* g){
 */
 void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyacente, int tiempoTrayecto){
 	for (int i = 0; i < g->numNodos; i++){
-		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, consultorioOrigen) == 1){
+		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, consultorioOrigen) == 0){
+			printf("Agregando adyacente a nodo '%s', ubicado en la posicion |%d|...\n", g->matrizAdyacencia[i]->origen->nombreConsultorio, i);
 			NodoAdyacente* adj = (NodoAdyacente*)malloc(sizeof(NodoAdyacente));
 			adj->tiempo = tiempoTrayecto;
 			adj->consultorio = buscarNodo(consultorioAdyacente, g);
@@ -75,8 +78,8 @@ void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyace
 */
 Grafo* leerGrafo(char* path, char* pathAristas){
 	Grafo* g = (Grafo*)malloc(sizeof(Grafo));
-	Nodo* nodoLeido;
-	char* linea = (char*)malloc(sizeof(char)*100);
+	char* buffer = (char*)malloc(sizeof(char)*100);
+	char* valor;
 	char* nombreConsultorio = (char*)malloc(sizeof(char)*30);
 	char* especialidad = (char*)malloc(sizeof(char)*30);
 	int pacientesMaximos;
@@ -91,60 +94,102 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 		printf("No se pudo abrir el archivo de consultorios\n");
 		exit(-1);
 	}
-	fscanf(archivo, "%d", &g->numNodos);
-	g->matrizAdyacencia = (ListaAdyacencia**)malloc(sizeof(ListaAdyacencia*)*g->numNodos);
+	fscanf(archivo, "%s", buffer);
+	g->numNodos = atoi(buffer);
+	printf("Num nodos: %d\n", g->numNodos);
+	g->matrizAdyacencia = (ListaAdyacencia**)malloc(sizeof(ListaAdyacencia*)*(g->numNodos));
 	// Leer el salto de linea pendiente
-	fgetc(archivo);
+	fgets(buffer, sizeof(buffer), archivo);
 	while (i < g->numNodos){
 		g->matrizAdyacencia[i] = (ListaAdyacencia*)malloc(sizeof(ListaAdyacencia));
 		g->matrizAdyacencia[i]->inicio = NULL;
 		g->matrizAdyacencia[i]->final = NULL;
 		g->matrizAdyacencia[i]->numNodosAdyacentes = 0;
 		// Leer caracteres mientras no sea salto de linea
-		fscanf(archivo, "%99[^\n]", linea);
-		// Leer el salto de linea pendiente
+		fscanf(archivo, "%99[^\n]", buffer);
+		// Leer el salto de línea pendiente
 		if (i != g->numNodos - 1){
 			fgetc(archivo);
 		}
-		linea = strtok(linea, " ");
-		strcpy(nombreConsultorio, linea);
-		linea = strtok(NULL, " ");
-		strcpy(especialidad, linea);
-		linea = strtok(NULL, " ");
-		pacientesMaximos = atoi(linea);
-		linea = strtok(NULL, " ");
-		pacientesActuales = atoi(linea);
-		nodoLeido = crearNodo(NULL, nombreConsultorio, especialidad,
+		valor = strtok(buffer, " ");
+		strcpy(nombreConsultorio, valor);
+		printf("Nombre consultorio: %s ", nombreConsultorio);
+		valor = strtok(NULL, " ");
+		strcpy(especialidad, valor);
+		printf("Especialidad: %s ", especialidad);
+		valor = strtok(NULL, " ");
+		pacientesMaximos = atoi(valor);
+		printf("Pacientes maximos: %d ", pacientesMaximos);
+		valor = strtok(NULL, " ");
+		pacientesActuales = atoi(valor);
+		printf("Pacientes actuales: %d\n", pacientesActuales);
+		Nodo* nodoLeido = crearNodo(NULL, nombreConsultorio, especialidad,
 			pacientesMaximos, pacientesActuales, 0);
 		g->matrizAdyacencia[i]->origen = nodoLeido;
+		//printf("Ciclo %d completado\n", i);
 		i++;
 	}
+	printf("Lectura de nodos completada\n");
 	fclose(archivo);
 	FILE* archivoAdj = fopen(pathAristas, "rb");
 	if (archivoAdj == NULL){
 		printf("No se pudo abrir el archivo de consultorios adyacentes\n");
 		exit(-1);
 	}
-	fscanf(archivoAdj, "%d", &numAdyacentes);
+	fscanf(archivoAdj, "%s", valor);
+	numAdyacentes = atoi(valor);
+	fgets(valor, sizeof(valor), archivoAdj);
 	i = 0;
 	while (i < numAdyacentes){
-		fscanf(archivo, "%99[^\n]", linea);
+		fscanf(archivo, "%99[^\n]", buffer);
 		if (i != numAdyacentes - 1){
 			fgetc(archivoAdj);
 		}
-		linea = strtok(linea, " ");
-		strcpy(nombreConsultorio, linea);
-		linea = strtok(NULL, " ");
-		strcpy(consultorioAdyacente, linea);
-		linea = strtok(NULL, " ");
-		tiempoTrayecto = atoi(linea);
+		valor = strtok(buffer, " ");
+		strcpy(nombreConsultorio, valor);
+		printf("Nombre consultorio: %s ", nombreConsultorio);
+		valor = strtok(NULL, " ");
+		strcpy(consultorioAdyacente, valor);
+		printf("Consultorio adyacente: %s ", consultorioAdyacente);
+		valor = strtok(NULL, " ");
+		tiempoTrayecto = atoi(valor);
+		printf("Tiempo: %d\n", tiempoTrayecto);
 		agregarAdyacente(g, nombreConsultorio, consultorioAdyacente, tiempoTrayecto);
 		i++;
 	}
 	fclose(archivoAdj);
-	free(linea);
+	free(buffer);
+	free(valor);
 	free(nombreConsultorio);
 	free(especialidad);
 	free(consultorioAdyacente);
 	return g;
+}
+/*
+ * Imprime la lista de adyacencia de un nodo con el formato nodoOrigen consultorioAdyaycente (tiempo) ; ...
+ * Entrada: ListaAdyacencia* lista -> la lista a imprimir.
+ * Salida: void.
+*/
+void imprimirAdyacentes(ListaAdyacencia* lista){
+	printf("Origen: %s ", lista->origen->nombreConsultorio);
+	NodoAdyacente* cursor = lista->inicio;
+	for (int i = 0; i < lista->numNodosAdyacentes; i++){
+		printf("%s (%d) ; ", cursor->consultorio->nombreConsultorio, cursor->tiempo);
+		cursor = cursor->siguiente;
+	}
+}
+
+/*
+ * Imprime el grafo completo (lista de listas adyacentes).
+ * Entrada: Grafo* g -> grafo a imprimir.
+ * Salida: void.
+*/
+void imprimirGrafo(Grafo* g){
+	printf("#################################");
+	printf("####### IMPRIMIENDO GRAFO #######");
+	printf("#################################\n\n");
+	for (int i = 0; i < g->numNodos; i++){
+		imprimirAdyacentes(g->matrizAdyacencia[i]);
+		printf("\n");
+	}
 }

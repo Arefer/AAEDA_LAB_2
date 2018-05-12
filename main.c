@@ -25,6 +25,8 @@
 
 int main(int argc, char **argv)
 {
+	Grafo* g = leerGrafo("Consultorios.in", "DondeLlevarAlBulto.in");
+	imprimirGrafo(g);
 	return 0;
 }
 

@@ -6,4 +6,6 @@ Nodo* crearNodo(Nodo* padre, char* nombreConsultorio, char* especialidad,
 Nodo* buscarNodo(char* nombreNodo, Grafo* g);
 void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyacente, int tiempoTrayecto);
 Grafo* leerGrafo(char* path, char* pathAristas);
+void imprimirAdyacentes(ListaAdyacencia* lista);
+void imprimirGrafo(Grafo* g);
 #endif /* FUNCTIONS_H */
