@@ -12,4 +12,5 @@ void relax(Nodo* u, Nodo* v, int tiempo);
 ListaAdyacencia* min(Grafo* g);
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad);
 void escribirRuta(Grafo* g, Nodo* destino, char* path);
+void liberarGrafo(Grafo* g);
 #endif /* FUNCTIONS_H */

@@ -125,7 +125,6 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 		Nodo* nodoLeido = crearNodo(NULL, nombreConsultorio, especialidad,
 			pacientesMaximos, pacientesActuales, 0);
 		g->matrizAdyacencia[i]->origen = nodoLeido;
-		//printf("Ciclo %d completado\n", i);
 		i++;
 	}
 	fclose(archivo);
@@ -139,7 +138,7 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	fgets(valor, sizeof(valor), archivoAdj);
 	i = 0;
 	while (i < numAdyacentes){
-		fscanf(archivo, "%99[^\n]", buffer);
+		fscanf(archivoAdj, "%99[^\n]", buffer);
 		if (i != numAdyacentes - 1){
 			fgetc(archivoAdj);
 		}
@@ -154,7 +153,6 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	}
 	fclose(archivoAdj);
 	free(buffer);
-	free(valor);
 	free(nombreConsultorio);
 	free(especialidad);
 	free(consultorioAdyacente);
@@ -294,4 +292,24 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
 		}
 	}
 	*/
+}
+
+void liberarGrafo(Grafo* g){
+	for (int i = 0; i < g->numNodos; i++){
+		// Liberar el nodo origen
+		free(g->matrizAdyacencia[i]->origen->nombreConsultorio);
+		free(g->matrizAdyacencia[i]->origen->especialidad);
+		free(g->matrizAdyacencia[i]->origen);
+		// Liberar la lista de adyacencia
+		NodoAdyacente* cursor = g->matrizAdyacencia[i]->inicio;
+		int j = 0;
+		while (j < g->matrizAdyacencia[i]->numNodosAdyacentes){
+			NodoAdyacente* siguiente = cursor->siguiente;
+			free(cursor);
+			cursor = siguiente;
+			j++;
+		}
+		free(g->matrizAdyacencia[i]);
+	}
+	free(g);
 }

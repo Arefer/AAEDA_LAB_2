@@ -21,11 +21,18 @@
  * 
  */
 
-#include "functions.h"
+#include "functions.c"
 
 int main(int argc, char **argv)
 {
-	Grafo* g = leerGrafo("Consultorios.in", "DondeLlevarAlBulto.in");
+	char* path1 = (char*)malloc(sizeof(char)*16);
+	char* path2 = (char*)malloc(sizeof(char)*22);
+	strcpy(path1, "Consultorios.in");
+	strcpy(path2, "DondeLlevarAlBulto.in");
+	Grafo* g = leerGrafo(path1, path2);
 	imprimirGrafo(g);
+	free(path1);
+	free(path2);
+	liberarGrafo(g);
 	return 0;
 }
