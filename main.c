@@ -29,4 +29,3 @@ int main(int argc, char **argv)
 	imprimirGrafo(g);
 	return 0;
 }
-

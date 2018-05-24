@@ -52,7 +52,6 @@ Nodo* buscarNodo(char* nombreNodo, Grafo* g){
 void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyacente, int tiempoTrayecto){
 	for (int i = 0; i < g->numNodos; i++){
 		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, consultorioOrigen) == 0){
-			printf("Agregando adyacente a nodo '%s', ubicado en la posicion |%d|...\n", g->matrizAdyacencia[i]->origen->nombreConsultorio, i);
 			NodoAdyacente* adj = (NodoAdyacente*)malloc(sizeof(NodoAdyacente));
 			adj->tiempo = tiempoTrayecto;
 			adj->consultorio = buscarNodo(consultorioAdyacente, g);
@@ -88,7 +87,7 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	int tiempoTrayecto;
 	int numAdyacentes;
 	int i = 0;
-
+	printf("############# LEYENDO GRAFO #############\n\n");
 	FILE* archivo = fopen(path, "rb");
 	if (archivo ==  NULL){
 		printf("No se pudo abrir el archivo de consultorios\n");
@@ -129,7 +128,6 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 		//printf("Ciclo %d completado\n", i);
 		i++;
 	}
-	printf("Lectura de nodos completada\n");
 	fclose(archivo);
 	FILE* archivoAdj = fopen(pathAristas, "rb");
 	if (archivoAdj == NULL){
@@ -147,13 +145,10 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 		}
 		valor = strtok(buffer, " ");
 		strcpy(nombreConsultorio, valor);
-		printf("Nombre consultorio: %s ", nombreConsultorio);
 		valor = strtok(NULL, " ");
 		strcpy(consultorioAdyacente, valor);
-		printf("Consultorio adyacente: %s ", consultorioAdyacente);
 		valor = strtok(NULL, " ");
 		tiempoTrayecto = atoi(valor);
-		printf("Tiempo: %d\n", tiempoTrayecto);
 		agregarAdyacente(g, nombreConsultorio, consultorioAdyacente, tiempoTrayecto);
 		i++;
 	}
@@ -163,6 +158,7 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	free(nombreConsultorio);
 	free(especialidad);
 	free(consultorioAdyacente);
+	printf("\n############# LECTURA DEL GRAFO COMPLETADA #############\n\n");
 	return g;
 }
 /*
@@ -171,10 +167,11 @@ Grafo* leerGrafo(char* path, char* pathAristas){
  * Salida: void.
 */
 void imprimirAdyacentes(ListaAdyacencia* lista){
-	printf("Origen: %s ", lista->origen->nombreConsultorio);
+	printf("Origen: %s -> ", lista->origen->nombreConsultorio);
 	NodoAdyacente* cursor = lista->inicio;
 	for (int i = 0; i < lista->numNodosAdyacentes; i++){
-		printf("%s (%d) ; ", cursor->consultorio->nombreConsultorio, cursor->tiempo);
+		printf("%s (%d)", cursor->consultorio->nombreConsultorio, cursor->tiempo);
+		if (i != lista->numNodosAdyacentes - 1) printf(" ; ");
 		cursor = cursor->siguiente;
 	}
 }
@@ -185,11 +182,116 @@ void imprimirAdyacentes(ListaAdyacencia* lista){
  * Salida: void.
 */
 void imprimirGrafo(Grafo* g){
-	printf("#################################");
-	printf("####### IMPRIMIENDO GRAFO #######");
+	printf("#################################\n");
+	printf("####### IMPRIMIENDO GRAFO #######\n");
 	printf("#################################\n\n");
 	for (int i = 0; i < g->numNodos; i++){
 		imprimirAdyacentes(g->matrizAdyacencia[i]);
-		printf("\n");
+		if (i != g->numNodos) printf("\n");
 	}
+}
+
+/*
+ * Evalua el camino mas corto hasta v, lo reemplaza por u-v en caso de ser mejorado.
+ * Entradas: Nodo* u -> nodo inicio.
+ * 			 Nodo* v -> nodo destino.
+ * 		     int w -> tiempo de trayecto entre u y v.
+ * Salida: void.
+*/
+void relax(Nodo* u, Nodo* v, int w){
+	if (v->tiempoAcumulado == -1){
+		v->tiempoAcumulado = u->tiempoAcumulado + w;
+	}
+	else if (v->tiempoAcumulado > u->tiempoAcumulado + w){
+		v->tiempoAcumulado =  u->tiempoAcumulado + w;
+		v->padre = u;
+	}
+}
+
+/*
+ * Encuentra el nodo con 'tiempoAcumulado' minimo del grafo
+ * Entrada: Grafo* g -> red de consultorios cargada.
+ * Salida: ListaAdyacencia* -> Lista correspondiente al nodo encontrado
+*/
+ListaAdyacencia* min(Grafo* g){
+	ListaAdyacencia* temp = g->matrizAdyacencia[0];
+	// En busqueda del nodo con tiempo minimo
+	for (int i = 1; i < g->numNodos; i++){
+		// Si el nodo tiene tiempo minimo menor al candidato actual
+		if (g->matrizAdyacencia[i]->origen->tiempoAcumulado <
+			temp->origen->tiempoAcumulado){
+			temp = g->matrizAdyacencia[i];
+		}
+	}
+	return temp;
+}
+/*
+ * Ingresa un paciente al sistema, buscando la ruta mas corta entre un 
+ * consultorio origen y otro con una especialidad buscada.
+ * Entradas: Grafo* g -> Red de consultorios cargada.
+ * 			 Nodo* s -> consultorio origen.
+ * 			 char* especialidad -> especialidad buscada.
+ * Salida: Nodo* -> Destino encontrado.
+*/
+Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
+	// Inicializar todas las distancias como inaccesibles, excepto el origen
+	// Para cada nodo del grafo
+	for (int i = 0; i < g->numNodos; i++){
+		// Si el nodo del grafo no es el nodo origen
+		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio,
+			s->nombreConsultorio) != 0){
+				g->matrizAdyacencia[i]->origen->padre = NULL;
+				g->matrizAdyacencia[i]->origen->tiempoAcumulado = -1;
+		} else {
+			// Este es el caso del nodo origen
+			g->matrizAdyacencia[i]->origen->padre = NULL;
+			g->matrizAdyacencia[i]->origen->tiempoAcumulado = 0;
+		}
+	}
+	int aux = 0;
+	while (aux == 0) {
+		ListaAdyacencia* minim = min(g);
+		// Comprobamos si el minimo es un consultorio de la especialidad
+		// buscada y ademas tiene cupo
+		if (strcmp(minim->origen->especialidad, especialidad) == 0 &&
+			minim->origen->pacientesActuales < minim->origen->pacientesMaximos){
+			minim->origen->pacientesActuales += 1;
+			aux = 1;
+			return minim->origen;
+		// Sino seguimos buscando
+		} else {
+			// Para cada nodo adyacente al minimo
+			NodoAdyacente* cursor = minim->inicio;
+			while (cursor->siguiente != NULL){
+				Nodo* u = minim->origen;
+				Nodo* v = cursor->consultorio;
+				int w = cursor->tiempo;
+				relax(u, v, w);
+				cursor = cursor->siguiente;
+			}
+		}
+	}
+	return NULL;
+}
+
+/*
+ * Escribe la ruta mas corta encontrada en un archivo.
+ * Entradas: Grafo* g -> red de consultorios cargada.
+ * 			 Nodo* destino -> destino encontrado luego de ingresar a un paciente.
+ * 			 char* path -> ubicacion del archivo a escribir.
+ * Salida: void
+*/
+void escribirRuta(Grafo* g, Nodo* destino, char* path){
+	/*
+	NodoAdyacente* inicio = (NodoAdyacente*)malloc(sizeof(NodoAdyacente));
+	inicio->consultorio = destino
+	NodoAdyacente* final = inicio;
+	Nodo* cursor = destino;
+	while(cursor->padre != NULL){
+		if (final != inicio){
+			final = (NodoAdyacente*)malloc(sizeof(NodoAdyacente));
+			final->consultorio = cursor
+		}
+	}
+	*/
 }
