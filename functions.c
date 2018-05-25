@@ -231,6 +231,10 @@ void printStack(MinPrioStack* s){
 		}
 	} 
 }
+/* Extrae el elemento minimo del stack (el primero en la pila).
+ * Entrada: MinPrioStack stack -> stack a extraer el elemento.
+ * Salida: ListaAdyacencia* -> el elemento minimo
+*/
 ListaAdyacencia* extractMin(MinPrioStack* stack){
 	ListaAdyacencia* min = stack->inicio;
 	stack->inicio = min->siguiente;
@@ -262,6 +266,7 @@ void addToStack(MinPrioStack* stack, ListaAdyacencia* elem){
 			stack->inicio = elem;
 			stack->numElementos += 1;
 		} else {
+			// Caso en donde el elemento se agrega no en los extremos
 			ListaAdyacencia* cursor = stack->inicio;
 			int aux = 0; // Indica si se añadio el elemento al stack
 			while (aux == 0) {
@@ -282,10 +287,9 @@ void addToStack(MinPrioStack* stack, ListaAdyacencia* elem){
 }
 
 /* Reordena el Stack, luego de haber actualizado el tiempo de un Nodo.
- * Entradas: MinPrioStack* s -> stack de nodos.
+ * Entradas: MinPrioStack* s -> stack de ListaAdyacencia*.
  * 			 Nodo* elem -> Nodo que fue modificado (tiempoAcumulado).
  * Salidas: void. (El stack se modifica por referencia).
- * 
 */
 void reOrderStack(MinPrioStack* s, Nodo* elem){
 	ListaAdyacencia* cursor = s->inicio;
@@ -306,7 +310,7 @@ void reOrderStack(MinPrioStack* s, Nodo* elem){
 					nuevoSiguiente = NULL;
 					cursor->siguiente = nuevoSiguiente;
 					s->numElementos -= 1;
-					
+				// En cualquier otro caso
 				} else {
 					nuevoSiguiente = cursor->siguiente->siguiente;
 					cursor->siguiente = nuevoSiguiente;
@@ -340,11 +344,15 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 				g->matrizAdyacencia[i]->origen->padre = NULL;
 				// Asignamos su costo como el maximo valor que puede adoptar un int
 				g->matrizAdyacencia[i]->origen->tiempoAcumulado = 2147483647;
+				// Desenlazamos el stack en caso de que se haya creado
+				g->matrizAdyacencia[i]->siguiente = NULL;
 		} else if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio,
 			s->nombreConsultorio) == 0){
 			// Este es el caso del nodo origen
 			g->matrizAdyacencia[i]->origen->padre = NULL;
 			g->matrizAdyacencia[i]->origen->tiempoAcumulado = 0;
+			// Desenlazamos el stack en caso de que se haya creado
+			g->matrizAdyacencia[i]->siguiente = NULL;
 			printf("El nodo origen es: %s\n", g->matrizAdyacencia[i]->origen->nombreConsultorio);
 		}
 	}
@@ -361,10 +369,12 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 		if (strcmp(minim->origen->especialidad, especialidad) == 0 &&
 			minim->origen->pacientesActuales < minim->origen->pacientesMaximos){
 			minim->origen->pacientesActuales += 1;
+			// En este caso la busqueda ha concluido
 			free(nodos);
 			return minim->origen;
 		// Sino seguimos buscando
 		} else {
+			// En este caso el minimo no es el destino o no tenia cupo
 			printf("El minimo (%s) no es el destino\n", minim->origen->nombreConsultorio);
 			// Para cada nodo adyacente al minimo
 			NodoAdyacente* cursor = minim->inicio;
@@ -373,6 +383,7 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 				Nodo* v = cursor->consultorio;
 				int w = cursor->tiempo;
 				printf("Relax con v='%s ; tiempoAcum='%d'\n", v->nombreConsultorio, v->tiempoAcumulado);
+				// Comprobamos si el camino para llegar a v puede ser mejorado
 				int r = relax(u, v, w);
 				// Si el valor de v es reemplazado, reordenamos el stack
 				if (r == 1){
@@ -417,6 +428,10 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
 	// Imprimir camino
 	// Abrimos el archivo
 	FILE* out = fopen(path, "w");
+	if (out == NULL){
+		printf("Error al crear/acceder al archivo\n");
+		exit(-1);
+	}
 	printf("\n\n------ IMPRIMIENDO CAMINO ------\n\n");
 	for (int i = 0; i < contador-1; i++){
 		printf("%s ", camino[i]->nombreConsultorio);
@@ -428,11 +443,33 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
 	}
 	printf("\nTiempo total: %d minutos.\n", camino[contador-1]->tiempoAcumulado);
 	fprintf(out, "\nTiempo total: %d minutos.", camino[contador-1]->tiempoAcumulado);
+	printf("Camino escrito en '%s'\n", path);
 	fclose(out);
 	// Liberar el camino
 	free(camino);
 }
 
+/* Dado el nombre de un consultorio, libera un cupo en dicho consultorio.
+ * Entrada: Grafo* g -> red de consultorios.
+ * 			char* consultorio -> nombre del consultorio.
+ * Salida: void. (el registro se modifica por referencia) 
+*/
+void darDeAlta(Grafo* g, char* consultorio){
+	// Recorremos el grafo en busca del consultorio especificado
+	for (int i = 0; i < g->numNodos; i++){
+		// Consultamos el nombre del consultorio
+		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, consultorio) == 0){
+			// Si el nombre coincide, pero no hay pacientes
+			if (g->matrizAdyacencia[i]->origen->pacientesActuales == 0){
+				printf("Ningun paciente es atendido aqui\n");
+			} else { // Si hay pacientes, eliminamos a uno del registro
+				printf("Cupo liberado correctamente\n");
+				g->matrizAdyacencia[i]->origen->pacientesActuales -= 1;
+			}
+			
+		}
+	}
+}
 void liberarGrafo(Grafo* g){
 	for (int i = 0; i < g->numNodos; i++){
 		// Liberar el nodo origen

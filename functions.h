@@ -13,7 +13,6 @@ MinPrioStack* crearStack(Grafo* g);
 void addToStack(MinPrioStack* stack, ListaAdyacencia* elem);
 void reOrderStack(MinPrioStack* s, Nodo* elem);
 ListaAdyacencia* extractMin(MinPrioStack* stack);
-// ListaAdyacencia* min(Grafo* g);
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad);
 void escribirRuta(Grafo* g, Nodo* destino, char* path);
 void liberarGrafo(Grafo* g);
