@@ -8,9 +8,16 @@ void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyace
 Grafo* leerGrafo(char* path, char* pathAristas);
 void imprimirAdyacentes(ListaAdyacencia* lista);
 void imprimirGrafo(Grafo* g);
-void relax(Nodo* u, Nodo* v, int tiempo);
-ListaAdyacencia* min(Grafo* g);
+int relax(Nodo* u, Nodo* v, int tiempo);
+MinPrioStack* crearStack(Grafo* g);
+void addToStack(MinPrioStack* stack, ListaAdyacencia* elem);
+void reOrderStack(MinPrioStack* s, Nodo* elem);
+ListaAdyacencia* extractMin(MinPrioStack* stack);
+// ListaAdyacencia* min(Grafo* g);
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad);
 void escribirRuta(Grafo* g, Nodo* destino, char* path);
 void liberarGrafo(Grafo* g);
+
+
+void printStack(MinPrioStack* s);
 #endif /* FUNCTIONS_H */

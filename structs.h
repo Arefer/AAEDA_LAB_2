@@ -22,6 +22,7 @@ struct listaAdyacencia{
 	Nodo* origen;
 	NodoAdyacente* inicio;
 	NodoAdyacente* final;
+	struct listaAdyacencia* siguiente;
 	int numNodosAdyacentes;
 };
 typedef struct listaAdyacencia ListaAdyacencia;
@@ -31,4 +32,11 @@ struct grafo{
 	int numNodos;
 };
 typedef struct grafo Grafo;
+
+struct minPriorityStack{
+	ListaAdyacencia* inicio;
+	ListaAdyacencia* final;
+	int numElementos;
+};
+typedef struct minPriorityStack MinPrioStack;
 #endif /* STRUCTS_H */

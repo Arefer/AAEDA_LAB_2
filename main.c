@@ -31,6 +31,9 @@ int main(int argc, char **argv)
 	strcpy(path2, "DondeLlevarAlBulto.in");
 	Grafo* g = leerGrafo(path1, path2);
 	imprimirGrafo(g);
+	
+	Nodo* destino = ingresarPaciente(g, g->matrizAdyacencia[0]->origen, "Especialidad_2");
+	escribirRuta(g, destino, "asd");
 	free(path1);
 	free(path2);
 	liberarGrafo(g);
