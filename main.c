@@ -34,6 +34,9 @@ int main(int argc, char **argv)
 	
 	Nodo* destino = ingresarPaciente(g, g->matrizAdyacencia[0]->origen, "Especialidad_2");
 	escribirRuta(g, destino, "asd");
+	
+	guardarConsultorios(g, "NuevoRegistro.out");
+	printf("\n\n------Registro actualizado------\n\n");
 	free(path1);
 	free(path2);
 	liberarGrafo(g);

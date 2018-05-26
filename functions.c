@@ -470,6 +470,36 @@ void darDeAlta(Grafo* g, char* consultorio){
 		}
 	}
 }
+
+/* Actualiza el archivo con la informacion cargada en el programa
+ * Entradas: Grafo* g -> Red de consultorios cargada.
+ * 			 char* path -> Ruta del archivo.
+ * Salida: void
+*/
+void guardarConsultorios(Grafo* g, char* path){
+		// Inicializamos el archivo en modo escritura
+		FILE* archivo = fopen(path, "w");
+		if (archivo == NULL){
+			printf("Error al abrir el archivo\n");
+			exit(-1);
+		}
+		// Escribimos el numero de consultorios en la primera linea
+		fprintf(archivo, "%d\n", g->numNodos);
+		// Para cada consultorio en el registro (grafo)
+		for (int i = 0; i < g->numNodos; i++){
+			// Consultorio especialidad pacientes_maximos pacientes_actuales 
+			fprintf(archivo, "%s ", g->matrizAdyacencia[i]->origen->nombreConsultorio);
+			fprintf(archivo, "%s ", g->matrizAdyacencia[i]->origen->especialidad);
+			fprintf(archivo, "%d ", g->matrizAdyacencia[i]->origen->pacientesMaximos);
+			fprintf(archivo, "%d", g->matrizAdyacencia[i]->origen->pacientesActuales);
+			// Escribimos salto de linea en caso de que no sea la ultima
+			if (i != g->numNodos - 1){
+				fprintf(archivo, "\n");
+			}
+		}
+		fclose(archivo);
+}
+
 void liberarGrafo(Grafo* g){
 	for (int i = 0; i < g->numNodos; i++){
 		// Liberar el nodo origen
