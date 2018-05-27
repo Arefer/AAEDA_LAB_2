@@ -180,7 +180,7 @@ void imprimirAdyacentes(ListaAdyacencia* lista){
  * Salida: void.
 */
 void imprimirGrafo(Grafo* g){
-	printf("#################################\n");
+	printf("\n#################################\n");
 	printf("####### IMPRIMIENDO GRAFO #######\n");
 	printf("#################################\n\n");
 	for (int i = 0; i < g->numNodos; i++){
@@ -202,7 +202,7 @@ int relax(Nodo* u, Nodo* v, int w){
 		v->tiempoAcumulado =  u->tiempoAcumulado + w;
 		v->padre = u;
 		r = 1;
-		printf("Tiempo reemplazado: %d\n", u->tiempoAcumulado + w);
+		// printf("Tiempo reemplazado: %d\n", u->tiempoAcumulado + w);
 	}
 	return r;
 }
@@ -353,17 +353,17 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 			g->matrizAdyacencia[i]->origen->tiempoAcumulado = 0;
 			// Desenlazamos el stack en caso de que se haya creado
 			g->matrizAdyacencia[i]->siguiente = NULL;
-			printf("El nodo origen es: %s\n", g->matrizAdyacencia[i]->origen->nombreConsultorio);
+			// printf("El nodo origen es: %s\n", g->matrizAdyacencia[i]->origen->nombreConsultorio);
 		}
 	}
 	MinPrioStack* nodos = crearStack(g);
-	printf("\n\n----------STACK----------\n\n");
-	printStack(nodos);
+	// printf("\n\n----------STACK----------\n\n");
+	// printStack(nodos);
 	while (nodos->numElementos != 0) {
 		ListaAdyacencia* minim = extractMin(nodos);
-		printf("Extraido del stack '%s'", minim->origen->nombreConsultorio);
-		printf("\n\n----------STACK----------\n\n");
-		printStack(nodos);
+		// printf("Extraido del stack '%s'", minim->origen->nombreConsultorio);
+		// printf("\n\n----------STACK----------\n\n");
+		// printStack(nodos);
 		// Comprobamos si el minimo es un consultorio de la especialidad
 		// buscada y ademas tiene cupo
 		if (strcmp(minim->origen->especialidad, especialidad) == 0 &&
@@ -375,14 +375,14 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 		// Sino seguimos buscando
 		} else {
 			// En este caso el minimo no es el destino o no tenia cupo
-			printf("El minimo (%s) no es el destino\n", minim->origen->nombreConsultorio);
+			// printf("El minimo (%s) no es el destino\n", minim->origen->nombreConsultorio);
 			// Para cada nodo adyacente al minimo
 			NodoAdyacente* cursor = minim->inicio;
 			while (cursor != NULL){
 				Nodo* u = minim->origen;
 				Nodo* v = cursor->consultorio;
 				int w = cursor->tiempo;
-				printf("Relax con v='%s ; tiempoAcum='%d'\n", v->nombreConsultorio, v->tiempoAcumulado);
+				// printf("Relax con v='%s ; tiempoAcum='%d'\n", v->nombreConsultorio, v->tiempoAcumulado);
 				// Comprobamos si el camino para llegar a v puede ser mejorado
 				int r = relax(u, v, w);
 				// Si el valor de v es reemplazado, reordenamos el stack
@@ -391,9 +391,9 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 				}
 				cursor = cursor->siguiente;
 			}
-			printf("Stack luego de relax para todos los nodos adyacentes de %s", minim->origen->nombreConsultorio);
-			printf("\n\n----------STACK----------\n\n");
-			printStack(nodos);
+			// printf("Stack luego de relax para todos los nodos adyacentes de %s", minim->origen->nombreConsultorio);
+			// printf("\n\n----------STACK----------\n\n");
+			// printStack(nodos);
 		}
 	}
 	free(nodos);
@@ -456,18 +456,25 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
 */
 void darDeAlta(Grafo* g, char* consultorio){
 	// Recorremos el grafo en busca del consultorio especificado
+	int aux = 0; // Indicador para verificar que existe el consultorio
 	for (int i = 0; i < g->numNodos; i++){
 		// Consultamos el nombre del consultorio
 		if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio, consultorio) == 0){
 			// Si el nombre coincide, pero no hay pacientes
 			if (g->matrizAdyacencia[i]->origen->pacientesActuales == 0){
 				printf("Ningun paciente es atendido aqui\n");
+				aux = 1;
+				i = g->numNodos;
 			} else { // Si hay pacientes, eliminamos a uno del registro
 				printf("Cupo liberado correctamente\n");
 				g->matrizAdyacencia[i]->origen->pacientesActuales -= 1;
+				aux = 1;
+				i = g->numNodos;
 			}
-			
 		}
+	}
+	if (aux == 0){
+		printf("Nombre de consultorio no valido (No se encuentra en el registro)\n");
 	}
 }
 
@@ -499,6 +506,107 @@ void guardarConsultorios(Grafo* g, char* path){
 		}
 		fclose(archivo);
 }
+
+void menu(){
+    printf("#####BIENVENIDO/A#####\n\n");
+    int menu = 0;
+    int registroCargado = 0;
+    char* pathConsultorios = (char*)malloc(sizeof(char)*16);
+    char* pathRutas = (char*)malloc(sizeof(char)*22);
+    char* pathCamino = (char*)malloc(sizeof(char)*15);
+    Grafo* g;
+    int option = 0;
+    strcpy(pathConsultorios, "Consultorios.in");
+    strcpy(pathRutas, "DondeLlevarAlBulto.in");
+    strcpy(pathCamino, "WiiuuWiiuu.out");
+    
+    while (menu >= 0){
+        printf("1.- Cargar registro de Consultorios\n");
+        printf("2.- Mostrar registro\n");
+        printf("3.- Agregar a un paciente\n");
+        printf("4.- Dar de alta a un paciente\n");
+        printf("5.- Actualizar fichero de Consultorios\n");
+        printf("6.- Salir\n\n");
+        printf("Ingresa una opcion: ");
+        scanf("%d", &option);
+        switch(option){
+            case 1: if (registroCargado == 1) {
+                        printf("Ya hay un archivo de registro cargado\n\n");
+                    }else{
+                        g = leerGrafo(pathConsultorios, pathRutas);
+                        registroCargado = 1;
+                    }
+                    break;
+
+            case 2: if (registroCargado == 1){
+                        imprimirGrafo(g);
+                    } else {
+                        printf("No existe registro en el programa. Por favor cargue uno.\n\n");
+                    }
+                    
+                    break;
+
+            case 3: if (registroCargado == 1){
+						char* nombreConsultorio = (char*)malloc(sizeof(char)*30);
+						char* especialidadRequerida = (char*)malloc(sizeof(char)*30);
+						Nodo* source;
+						Nodo* destino;
+                        printf("Ingrese el nombre del consultorio origen: ");
+                        scanf("%s", nombreConsultorio);
+                        printf("Ingrese la especialidad requerida: ");
+                        scanf("%s", especialidadRequerida);
+                        source = buscarNodo(nombreConsultorio, g);
+                        if (source == NULL){
+							printf("Consultorio origen no existe en el registro\n\n");
+							free(nombreConsultorio);
+							free(especialidadRequerida);
+						}else{
+							destino = ingresarPaciente(g, source, especialidadRequerida);
+							if (destino == NULL){
+								printf("No es posible atender al cliente, no hay cupos o especialidad requerida\n\n");
+							} else {
+								escribirRuta(g, destino, pathCamino);
+							}
+						}
+						free(nombreConsultorio);
+						free(especialidadRequerida);
+                    } else {
+                        printf("No existe registro en el programa. Por favor cargue uno.\n\n");
+                    }
+                    break;
+
+            case 4: if (registroCargado == 1) {
+                        char* nombreConsultorio = (char*)malloc(sizeof(char)*30);
+                        printf("Ingrese el nombre del consultorio en el cual fue atendido el paciente: ");
+                        darDeAlta(g, nombreConsultorio);
+                        free(nombreConsultorio);
+                    } else {
+                        printf("No existe registro en el programa. Por favor cargue uno.\n\n");
+                    }
+                    break;
+            
+            case 5: if (registroCargado == 1) {
+                        printf("\n\n------ ACTUALIZANDO FICHERO ------\n\n");
+                        guardarConsultorios(g, pathConsultorios);
+                        printf("Fichero actualizado exitosamente\n");
+                    } else {
+                        printf("No existe registro en el programa. Por favor cargue uno.\n\n");
+                    }
+                    break;
+            
+            case 6: printf("Saliendo...\n");
+                    if (registroCargado == 1) liberarGrafo(g);
+                    free(pathConsultorios);
+                    free(pathRutas);
+                    free(pathCamino);
+                    menu = -1;
+                    break;
+                    
+            default: printf("Opcion no valida\n\n");
+        }
+    }
+}
+
 
 void liberarGrafo(Grafo* g){
 	for (int i = 0; i < g->numNodos; i++){

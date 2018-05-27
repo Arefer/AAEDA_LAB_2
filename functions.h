@@ -16,6 +16,7 @@ ListaAdyacencia* extractMin(MinPrioStack* stack);
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad);
 void escribirRuta(Grafo* g, Nodo* destino, char* path);
 void guardarConsultorios(Grafo* g, char* path);
+void menu();
 void liberarGrafo(Grafo* g);
 
 

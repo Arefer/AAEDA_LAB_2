@@ -25,6 +25,7 @@
 
 int main(int argc, char **argv)
 {
+	/*
 	char* path1 = (char*)malloc(sizeof(char)*16);
 	char* path2 = (char*)malloc(sizeof(char)*22);
 	strcpy(path1, "Consultorios.in");
@@ -40,5 +41,7 @@ int main(int argc, char **argv)
 	free(path1);
 	free(path2);
 	liberarGrafo(g);
+	*/
+	menu();
 	return 0;
 }
