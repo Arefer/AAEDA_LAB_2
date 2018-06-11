@@ -627,3 +627,7 @@ void liberarGrafo(Grafo* g){
 	}
 	free(g);
 }
+
+
+
+//asdkjhjlkasdlkñsad
