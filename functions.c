@@ -12,6 +12,7 @@
  * 			 int pacientesMaximos -> capacidad máxima de pacientes que puede atender el consultorio.
  * 			 int tiempoAcumulado -> tiempo empleado en la búsqueda de un camino más corto.
  * Salida: Nodo* -> Un puntero al nodo creado.
+ * T(n) = 10 ; O(n) = 1
 */
 Nodo* crearNodo(Nodo* padre, char* nombreConsultorio, char* especialidad,
 	int pacientesMaximos, int pacientesActuales, int tiempoAcumulado){
@@ -32,6 +33,7 @@ Nodo* crearNodo(Nodo* padre, char* nombreConsultorio, char* especialidad,
  * Entradas: char* nombreNodo -> nombre del consultorio a buscar.
  * 			 Grafo* g -> grafo de la red de consultorios.
  * Salida: Nodo* -> puntero al nodo encontrado.
+ * T(n) = 2n+1 ; O(n) = n
 */
 Nodo* buscarNodo(char* nombreNodo, Grafo* g){
 	for (int i = 0; i < g->numNodos; i++){
@@ -48,6 +50,7 @@ Nodo* buscarNodo(char* nombreNodo, Grafo* g){
  * 			 char* consultorioAdyacente -> nombre del consultorio a agregar.
  * 			 int tiempoTrayecto -> tiempo de trayecto entre los consultorios.
  * Salida: void.
+ * T(n) = n^2+2n+5 ; O(n) = n^2
 */
 void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyacente, int tiempoTrayecto){
 	for (int i = 0; i < g->numNodos; i++){
@@ -73,9 +76,11 @@ void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyace
  * Lee y almacena un grafo que representa la red de consultorios desde dos archivos de texto.
  * Entradas: char* path -> nombre del archivo que posee la lista de consultorios.
  * 			 char* pathAristas -> nombre del archivo que posee las conexiones entre consultorios.
- * Saluda: Grafo* -> un puntero al grafo creado a través de la lectura.
+ * Salida: Grafo* -> un puntero al grafo creado a través de la lectura.
+ * T(n) = 32+9n+10n^2+n^3+n^4 ; O(n) = n^4
 */
 Grafo* leerGrafo(char* path, char* pathAristas){
+	#pragma region Grafo y Variables auxiliares
 	Grafo* g = (Grafo*)malloc(sizeof(Grafo));
 	char* buffer = (char*)malloc(sizeof(char)*100);
 	char* valor;
@@ -87,19 +92,24 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	int tiempoTrayecto;
 	int numAdyacentes;
 	int i = 0;
+	#pragma endregion
 	printf("############# LEYENDO GRAFO #############\n\n");
+	#pragma region Lectura de archivo y validacion de memoria
 	FILE* archivo = fopen(path, "rb");
 	if (archivo ==  NULL){
 		printf("No se pudo abrir el archivo de consultorios\n");
 		exit(-1);
 	}
 	fscanf(archivo, "%s", buffer);
+	#pragma endregion
 	g->numNodos = atoi(buffer);
 	printf("Num nodos: %d\n", g->numNodos);
 	g->matrizAdyacencia = (ListaAdyacencia**)malloc(sizeof(ListaAdyacencia*)*(g->numNodos));
 	// Leer el salto de linea pendiente
 	fgets(buffer, sizeof(buffer), archivo);
+	// Este ciclo es para leer el archivo Consultorios.in y agregarlos al grafo
 	while (i < g->numNodos){
+		#pragma region Leer datos, crear un nodo y agregarlo al grafo
 		g->matrizAdyacencia[i] = (ListaAdyacencia*)malloc(sizeof(ListaAdyacencia));
 		g->matrizAdyacencia[i]->inicio = NULL;
 		g->matrizAdyacencia[i]->final = NULL;
@@ -126,18 +136,23 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 			pacientesMaximos, pacientesActuales, 0);
 		g->matrizAdyacencia[i]->origen = nodoLeido;
 		i++;
+		#pragma endregion
 	}
 	fclose(archivo);
+	#pragma region Lectura segundo archivo y validacion de memoria
 	FILE* archivoAdj = fopen(pathAristas, "rb");
 	if (archivoAdj == NULL){
 		printf("No se pudo abrir el archivo de consultorios adyacentes\n");
 		exit(-1);
 	}
 	fscanf(archivoAdj, "%s", valor);
+	#pragma endregion
 	numAdyacentes = atoi(valor);
 	fgets(valor, sizeof(valor), archivoAdj);
 	i = 0;
+	// Este ciclo es para agregar los consultorios adyacentes a cada consultorio
 	while (i < numAdyacentes){
+		#pragma region Leer datos, crear nodo adyacente y agregarlo al grafo
 		fscanf(archivoAdj, "%99[^\n]", buffer);
 		if (i != numAdyacentes - 1){
 			fgetc(archivoAdj);
@@ -150,19 +165,23 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 		tiempoTrayecto = atoi(valor);
 		agregarAdyacente(g, nombreConsultorio, consultorioAdyacente, tiempoTrayecto);
 		i++;
+		#pragma endregion
 	}
+	#pragma region Liberando memoria
 	fclose(archivoAdj);
 	free(buffer);
 	free(nombreConsultorio);
 	free(especialidad);
 	free(consultorioAdyacente);
 	printf("\n############# LECTURA DEL GRAFO COMPLETADA #############\n\n");
+	#pragma endregion
 	return g;
 }
 /*
  * Imprime la lista de adyacencia de un nodo con el formato nodoOrigen consultorioAdyaycente (tiempo) ; ...
  * Entrada: ListaAdyacencia* lista -> la lista a imprimir.
  * Salida: void.
+ * T(n) = 3n+2 ; O(n) = n
 */
 void imprimirAdyacentes(ListaAdyacencia* lista){
 	printf("Origen: %s -> ", lista->origen->nombreConsultorio);
@@ -178,6 +197,7 @@ void imprimirAdyacentes(ListaAdyacencia* lista){
  * Imprime el grafo completo (lista de listas adyacentes).
  * Entrada: Grafo* g -> grafo a imprimir.
  * Salida: void.
+ * T(n) = n^2-n+4 ; O(n) = n^2
 */
 void imprimirGrafo(Grafo* g){
 	printf("\n#################################\n");
@@ -195,6 +215,7 @@ void imprimirGrafo(Grafo* g){
  * 			 Nodo* v -> nodo destino.
  * 		     int w -> tiempo de trayecto entre u y v.
  * Salida: int -> 1 si el valor de V fue reemplazado, 0 en caso contrario.
+ * T(n) = 4 ; O(n) = 1
 */
 int relax(Nodo* u, Nodo* v, int w){
 	int r = 0;
@@ -202,13 +223,13 @@ int relax(Nodo* u, Nodo* v, int w){
 		v->tiempoAcumulado =  u->tiempoAcumulado + w;
 		v->padre = u;
 		r = 1;
-		// printf("Tiempo reemplazado: %d\n", u->tiempoAcumulado + w);
 	}
 	return r;
 }
 /* Crea un stack de prioridad minima a partir del grafo.
  * Entrada: Grafo* g -> red de consultorios cargada.
  * Salida: MinPrioStack* de ListaAdyacencia*.
+ * T(n) = n+3 ; O(n) = 1
 */
 MinPrioStack* crearStack(Grafo* g){
 	MinPrioStack* stack = (MinPrioStack*)malloc(sizeof(MinPrioStack));
@@ -233,7 +254,8 @@ void printStack(MinPrioStack* s){
 }
 /* Extrae el elemento minimo del stack (el primero en la pila).
  * Entrada: MinPrioStack stack -> stack a extraer el elemento.
- * Salida: ListaAdyacencia* -> el elemento minimo
+ * Salida: ListaAdyacencia* -> el elemento minimo.
+ * T(n) = 4 ; O(n) = 1
 */
 ListaAdyacencia* extractMin(MinPrioStack* stack){
 	ListaAdyacencia* min = stack->inicio;
@@ -245,6 +267,7 @@ ListaAdyacencia* extractMin(MinPrioStack* stack){
  * Entradas: MinPrioStack* stack-> stack de minima prioridad.
  * 			 ListaAdyacencia* elem -> elemento a agregar al stack.
  * Salida: void.
+ * 
 */
 void addToStack(MinPrioStack* stack, ListaAdyacencia* elem){
 	
@@ -627,7 +650,3 @@ void liberarGrafo(Grafo* g){
 	}
 	free(g);
 }
-
-
-
-//asdkjhjlkasdlkñsad
