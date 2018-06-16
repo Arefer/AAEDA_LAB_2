@@ -22,7 +22,6 @@ struct listaAdyacencia{
 	Nodo* origen;
 	NodoAdyacente* inicio;
 	NodoAdyacente* final;
-	struct listaAdyacencia* siguiente;
 	int numNodosAdyacentes;
 };
 typedef struct listaAdyacencia ListaAdyacencia;

@@ -214,139 +214,56 @@ void imprimirGrafo(Grafo* g){
  * Entradas: Nodo* u -> nodo inicio.
  * 			 Nodo* v -> nodo destino.
  * 		     int w -> tiempo de trayecto entre u y v.
- * Salida: int -> 1 si el valor de V fue reemplazado, 0 en caso contrario.
+ * Salida: void.
  * T(n) = 4 ; O(n) = 1
 */
-int relax(Nodo* u, Nodo* v, int w){
-	int r = 0;
+void relax(Nodo* u, Nodo* v, int w){
 	if (v->tiempoAcumulado > u->tiempoAcumulado + w){
 		v->tiempoAcumulado =  u->tiempoAcumulado + w;
 		v->padre = u;
-		r = 1;
 	}
-	return r;
 }
-/* Crea un stack de prioridad minima a partir del grafo.
- * Entrada: Grafo* g -> red de consultorios cargada.
- * Salida: MinPrioStack* de ListaAdyacencia*.
- * T(n) = n+3 ; O(n) = 1
-*/
-MinPrioStack* crearStack(Grafo* g){
-	MinPrioStack* stack = (MinPrioStack*)malloc(sizeof(MinPrioStack));
-	stack->numElementos = 0;
-	for (int i = 0; i < g->numNodos; i++){
-		addToStack(stack, g->matrizAdyacencia[i]);
-	}
-	return stack;
-}
+/*
+ * Extrae la ListaAdyacencia* cuyo nodo origen posee el tiempo minimo.
+ * Entradas: ListaAdyacencia** matrizAdyacencia -> Arreglo de ListaAdyacencia* al que se desea extraer el minimo.
+ * 			 int largo -> largo del arreglo.
+ * Salida: ListaAdyacencia* -> ListaAdyacencia* cuyo origenn posee el tiempo minimo. 
+ * T(n) = 6n+6 ; O(n) = n
+*/ 
+ListaAdyacencia* extractMin(ListaAdyacencia** matrizAdyacencia, int largo){
+	#pragma region Buscar el indice del elemento minimo
+	// Asumimos que el mimino es el primer elemento
+	ListaAdyacencia* min = matrizAdyacencia[0];
+	int indexMin = 0;
+	int i = 1;
+	while(i < largo){
+		// Si el tiempo del nodo es menor al minimo actual, reemplazar el minimo
+		ListaAdyacencia* actual = matrizAdyacencia[i];
 
-void printStack(MinPrioStack* s){
-	ListaAdyacencia* cursor = s->inicio;
-	while (cursor != NULL){
-		printf("Consultorio = '%s' ; TiempoAcumulado = '%d'\n", cursor->origen->nombreConsultorio, cursor->origen->tiempoAcumulado);
-		if (cursor == s->final){
-			cursor->siguiente = NULL;
-			cursor = cursor->siguiente;
-		} else {
-			cursor = cursor->siguiente;
+		if (matrizAdyacencia[i]->origen->tiempoAcumulado < min->origen->tiempoAcumulado){
+			min = matrizAdyacencia[i];
+			indexMin = i;
 		}
-	} 
-}
-/* Extrae el elemento minimo del stack (el primero en la pila).
- * Entrada: MinPrioStack stack -> stack a extraer el elemento.
- * Salida: ListaAdyacencia* -> el elemento minimo.
- * T(n) = 4 ; O(n) = 1
-*/
-ListaAdyacencia* extractMin(MinPrioStack* stack){
-	ListaAdyacencia* min = stack->inicio;
-	stack->inicio = min->siguiente;
-	stack->numElementos -= 1;
+		i++;
+	}
+	#pragma endregion
+	// Reordenamos el arreglo
+	for (i = indexMin; i < largo-1; i++){
+		//matrizAdyacencia[i] = &*matrizAdyacencia[i+1];
+		matrizAdyacencia[i] = matrizAdyacencia[i+1];
+	}
+
+	// Si el arreglo poseía un elemento, liberar la memoria y devolver ese elemento
+	if (largo == 1) {
+		free(matrizAdyacencia);
+		return min;
+	}
+
+	// Sino, realocar la memoria
+	matrizAdyacencia = realloc(matrizAdyacencia, sizeof(ListaAdyacencia*)*(largo-1));
+	ListaAdyacencia* test = matrizAdyacencia[2];
+	ListaAdyacencia* test2 = test;
 	return min;
-}
-/* Agrega un elemento al stack de prioridad minima.
- * Entradas: MinPrioStack* stack-> stack de minima prioridad.
- * 			 ListaAdyacencia* elem -> elemento a agregar al stack.
- * Salida: void.
- * 
-*/
-void addToStack(MinPrioStack* stack, ListaAdyacencia* elem){
-	
-	// Si el stack esta vacio
-	if (stack->numElementos == 0){
-		stack->inicio = elem; // Elemento minimo (en lo mas alto del stack) 
-		stack->final = elem; // Elemento maximo (en la base del stack)
-		stack->numElementos += 1;
-	} else { // Si no esta vacio
-		// Caso donde el elemento a agregar es mayor o igual al final
-		if (elem->origen->tiempoAcumulado >= stack->final->origen->tiempoAcumulado){
-			stack->final->siguiente = elem;
-			stack->final = elem;
-			stack->numElementos += 1;
-		}
-		// Caso donde el elemento a agregar es menor o igual al principio
-		else if (elem->origen->tiempoAcumulado <= stack->inicio->origen->tiempoAcumulado){
-			elem->siguiente = stack->inicio;
-			stack->inicio = elem;
-			stack->numElementos += 1;
-		} else {
-			// Caso en donde el elemento se agrega no en los extremos
-			ListaAdyacencia* cursor = stack->inicio;
-			int aux = 0; // Indica si se añadio el elemento al stack
-			while (aux == 0) {
-				int top = cursor->origen->tiempoAcumulado;
-				int bottom = cursor->siguiente->origen->tiempoAcumulado;
-				ListaAdyacencia* bottomList = cursor->siguiente;
-				// Si el tiempo de elem esta entre top y bottom
-				if (elem->origen->tiempoAcumulado >= top && elem->origen->tiempoAcumulado <= bottom){
-					cursor->siguiente = elem;
-					elem->siguiente = bottomList;
-					stack->numElementos += 1;
-					aux = 1; // Indicamos que se añadio el elemento
-				}
-				cursor = cursor->siguiente;
-			}
-		}
-	}
-}
-
-/* Reordena el Stack, luego de haber actualizado el tiempo de un Nodo.
- * Entradas: MinPrioStack* s -> stack de ListaAdyacencia*.
- * 			 Nodo* elem -> Nodo que fue modificado (tiempoAcumulado).
- * Salidas: void. (El stack se modifica por referencia).
-*/
-void reOrderStack(MinPrioStack* s, Nodo* elem){
-	ListaAdyacencia* cursor = s->inicio;
-	ListaAdyacencia* eliminado;
-	// Si el elemento a eliminar esta en el top del stack
-	if (elem == s->inicio->origen){
-		eliminado = s->inicio;
-		s->inicio = s->inicio->siguiente;
-		s->numElementos -= 1;
-	} else { // Sino
-		while(cursor != NULL && cursor->siguiente != NULL){
-			if (cursor->siguiente->origen == elem){
-				eliminado = cursor->siguiente;
-				ListaAdyacencia* nuevoSiguiente;
-				// Vemos el caso en que el elem a eliminar sea el ultimo
-				if (eliminado == s->final){
-					s->final = cursor;
-					nuevoSiguiente = NULL;
-					cursor->siguiente = nuevoSiguiente;
-					s->numElementos -= 1;
-				// En cualquier otro caso
-				} else {
-					nuevoSiguiente = cursor->siguiente->siguiente;
-					cursor->siguiente = nuevoSiguiente;
-					s->numElementos -= 1;
-				}
-			}
-			cursor = cursor->siguiente;
-		}
-	}
-	eliminado->siguiente = NULL;
-	
-	// Ahora añadimos nuevamente el elemento eliminado, pero en orden
-	addToStack(s, eliminado);
 }
 
 /*
@@ -356,9 +273,10 @@ void reOrderStack(MinPrioStack* s, Nodo* elem){
  * 			 Nodo* s -> consultorio origen.
  * 			 char* especialidad -> especialidad buscada.
  * Salida: Nodo* -> Destino encontrado.
+ * T(n) = 14n^2+3n+2 ; O(n) = n^2
 */
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
-	// Inicializar todas las distancias como inaccesibles, excepto el origen
+	#pragma region Inizializar nodos como inaccesibles a excepción del origen
 	// Para cada nodo del grafo
 	for (int i = 0; i < g->numNodos; i++){
 		// Si el nodo del grafo no es el nodo origen
@@ -367,59 +285,51 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 				g->matrizAdyacencia[i]->origen->padre = NULL;
 				// Asignamos su costo como el maximo valor que puede adoptar un int
 				g->matrizAdyacencia[i]->origen->tiempoAcumulado = 2147483647;
-				// Desenlazamos el stack en caso de que se haya creado
-				g->matrizAdyacencia[i]->siguiente = NULL;
 		} else if (strcmp(g->matrizAdyacencia[i]->origen->nombreConsultorio,
 			s->nombreConsultorio) == 0){
 			// Este es el caso del nodo origen
 			g->matrizAdyacencia[i]->origen->padre = NULL;
 			g->matrizAdyacencia[i]->origen->tiempoAcumulado = 0;
-			// Desenlazamos el stack en caso de que se haya creado
-			g->matrizAdyacencia[i]->siguiente = NULL;
-			// printf("El nodo origen es: %s\n", g->matrizAdyacencia[i]->origen->nombreConsultorio);
 		}
 	}
-	MinPrioStack* nodos = crearStack(g);
-	// printf("\n\n----------STACK----------\n\n");
-	// printStack(nodos);
-	while (nodos->numElementos != 0) {
-		ListaAdyacencia* minim = extractMin(nodos);
-		// printf("Extraido del stack '%s'", minim->origen->nombreConsultorio);
-		// printf("\n\n----------STACK----------\n\n");
-		// printStack(nodos);
+	#pragma endregion
+	
+	// Copia del arreglo de ListaAdyacencia* del grafo
+	ListaAdyacencia** nodosSinOptimizar = (ListaAdyacencia**)malloc(sizeof(ListaAdyacencia*)*g->numNodos);
+	// Asignando los punteros del grafo al arreglo
+	for (int k = 0; k < g->numNodos; k++){
+		nodosSinOptimizar[k] = g->matrizAdyacencia[k];
+	}
+	int largoArreglo = g->numNodos;
+	// Mientras queden elementos en el arreglo
+	while (largoArreglo > 0) {
+		ListaAdyacencia* minim = extractMin(nodosSinOptimizar, largoArreglo);
+		largoArreglo -= 1;
 		// Comprobamos si el minimo es un consultorio de la especialidad
 		// buscada y ademas tiene cupo
 		if (strcmp(minim->origen->especialidad, especialidad) == 0 &&
 			minim->origen->pacientesActuales < minim->origen->pacientesMaximos){
 			minim->origen->pacientesActuales += 1;
 			// En este caso la busqueda ha concluido
-			free(nodos);
+			if (largoArreglo > 0)
+				free(nodosSinOptimizar);
 			return minim->origen;
 		// Sino seguimos buscando
 		} else {
 			// En este caso el minimo no es el destino o no tenia cupo
-			// printf("El minimo (%s) no es el destino\n", minim->origen->nombreConsultorio);
-			// Para cada nodo adyacente al minimo
 			NodoAdyacente* cursor = minim->inicio;
-			while (cursor != NULL){
+			while (cursor != NULL){ // Para cada nodo adyacente al minimo
 				Nodo* u = minim->origen;
 				Nodo* v = cursor->consultorio;
 				int w = cursor->tiempo;
-				// printf("Relax con v='%s ; tiempoAcum='%d'\n", v->nombreConsultorio, v->tiempoAcumulado);
 				// Comprobamos si el camino para llegar a v puede ser mejorado
-				int r = relax(u, v, w);
-				// Si el valor de v es reemplazado, reordenamos el stack
-				if (r == 1){
-					reOrderStack(nodos, v);
-				}
+				relax(u, v, w);
 				cursor = cursor->siguiente;
 			}
-			// printf("Stack luego de relax para todos los nodos adyacentes de %s", minim->origen->nombreConsultorio);
-			// printf("\n\n----------STACK----------\n\n");
-			// printStack(nodos);
 		}
 	}
-	free(nodos);
+	// No es necesario liberar memoria de nodosSinOptimizar porque se hace a la hora
+	// de extraer el minimo
 	return NULL;
 }
 
@@ -429,6 +339,7 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
  * 			 Nodo* destino -> destino encontrado luego de ingresar a un paciente.
  * 			 char* path -> ubicacion del archivo a escribir.
  * Salida: void
+ * T(n) = 11n+12 ; O(n) = n
 */
 void escribirRuta(Grafo* g, Nodo* destino, char* path){
 	Nodo* cursor = destino;
@@ -476,6 +387,7 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
  * Entrada: Grafo* g -> red de consultorios.
  * 			char* consultorio -> nombre del consultorio.
  * Salida: void. (el registro se modifica por referencia) 
+ * T(n) = 5n+1 ; O(n) = n 
 */
 void darDeAlta(Grafo* g, char* consultorio){
 	// Recorremos el grafo en busca del consultorio especificado
@@ -505,6 +417,7 @@ void darDeAlta(Grafo* g, char* consultorio){
  * Entradas: Grafo* g -> Red de consultorios cargada.
  * 			 char* path -> Ruta del archivo.
  * Salida: void
+ * T(n) = 5n+3 ; O(n) = n
 */
 void guardarConsultorios(Grafo* g, char* path){
 		// Inicializamos el archivo en modo escritura
