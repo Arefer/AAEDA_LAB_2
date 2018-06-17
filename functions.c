@@ -276,7 +276,7 @@ ListaAdyacencia* extractMin(ListaAdyacencia** matrizAdyacencia, int largo){
  * T(n) = 14n^2+3n+2 ; O(n) = n^2
 */
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
-	#pragma region Inizializar nodos como inaccesibles a excepción del origen
+	#pragma region Inicializar nodos como inaccesibles a excepción del origen
 	// Para cada nodo del grafo
 	for (int i = 0; i < g->numNodos; i++){
 		// Si el nodo del grafo no es el nodo origen
@@ -328,8 +328,6 @@ Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad){
 			}
 		}
 	}
-	// No es necesario liberar memoria de nodosSinOptimizar porque se hace a la hora
-	// de extraer el minimo
 	return NULL;
 }
 
@@ -359,7 +357,7 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
 		aux -= 1;
 	}
 	
-	// Imprimir camino
+	#pragma region Escribir camino en archivo
 	// Abrimos el archivo
 	FILE* out = fopen(path, "w");
 	if (out == NULL){
@@ -379,6 +377,7 @@ void escribirRuta(Grafo* g, Nodo* destino, char* path){
 	fprintf(out, "\nTiempo total: %d minutos.", camino[contador-1]->tiempoAcumulado);
 	printf("Camino escrito en '%s'\n", path);
 	fclose(out);
+	#pragma endregion
 	// Liberar el camino
 	free(camino);
 }
@@ -444,7 +443,7 @@ void guardarConsultorios(Grafo* g, char* path){
 }
 
 void menu(){
-    printf("#####BIENVENIDO/A#####\n\n");
+    printf("##### BIENVENIDO/A #####\n\n");
     int menu = 0;
     int registroCargado = 0;
     char* pathConsultorios = (char*)malloc(sizeof(char)*16);
@@ -476,6 +475,7 @@ void menu(){
 
             case 2: if (registroCargado == 1){
                         imprimirGrafo(g);
+						printf("\n");
                     } else {
                         printf("No existe registro en el programa. Por favor cargue uno.\n\n");
                     }
@@ -500,12 +500,15 @@ void menu(){
 							destino = ingresarPaciente(g, source, especialidadRequerida);
 							if (destino == NULL){
 								printf("No es posible atender al cliente, no hay cupos o especialidad requerida\n\n");
+								free(nombreConsultorio);
+								free(especialidadRequerida);
 							} else {
 								escribirRuta(g, destino, pathCamino);
+								free(nombreConsultorio);
+								free(especialidadRequerida);
 							}
 						}
-						free(nombreConsultorio);
-						free(especialidadRequerida);
+						
                     } else {
                         printf("No existe registro en el programa. Por favor cargue uno.\n\n");
                     }
@@ -543,7 +546,12 @@ void menu(){
     }
 }
 
-
+/*
+ * Libera la memoria ocupada por el grafo.
+ * Entradas: Grafo* g -> Grafo a liberar.
+ * Salida: void.
+ * T(n) = 4n^2+n+1 ; O(n) = n^2
+*/
 void liberarGrafo(Grafo* g){
 	for (int i = 0; i < g->numNodos; i++){
 		// Liberar el nodo origen
