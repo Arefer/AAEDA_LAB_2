@@ -93,7 +93,7 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	int numAdyacentes;
 	int i = 0;
 	#pragma endregion
-	printf("############# LEYENDO GRAFO #############\n\n");
+	printf("\n############# LEYENDO REGISTRO #############\n\n");
 	#pragma region Lectura de archivo y validacion de memoria
 	FILE* archivo = fopen(path, "rb");
 	if (archivo ==  NULL){
@@ -103,7 +103,7 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	fscanf(archivo, "%s", buffer);
 	#pragma endregion
 	g->numNodos = atoi(buffer);
-	printf("Num nodos: %d\n", g->numNodos);
+	printf("Num consultorios: %d\n", g->numNodos);
 	g->matrizAdyacencia = (ListaAdyacencia**)malloc(sizeof(ListaAdyacencia*)*(g->numNodos));
 	// Leer el salto de linea pendiente
 	fgets(buffer, sizeof(buffer), archivo);
@@ -173,7 +173,7 @@ Grafo* leerGrafo(char* path, char* pathAristas){
 	free(nombreConsultorio);
 	free(especialidad);
 	free(consultorioAdyacente);
-	printf("\n############# LECTURA DEL GRAFO COMPLETADA #############\n\n");
+	printf("\n############# LECTURA DEL REGISTRO COMPLETADA #############\n\n");
 	#pragma endregion
 	return g;
 }
@@ -209,6 +209,24 @@ void imprimirGrafo(Grafo* g){
 	}
 }
 
+/*
+ * Imprime la lista de consultorios en memoria.
+ * Entrada: Grafo* g -> grafo de consultorios en memoria.
+ * Salida: void.
+ * T(n) = ; O(n) = 
+*/
+void imprimirConsultorios(Grafo* g){
+	printf("\n###### MOSTRANDO REGISTRO ######\n");
+	for (int i = 0; i < g->numNodos; i++){
+		char* nombre = g->matrizAdyacencia[i]->origen->nombreConsultorio;
+		char* especialidad = g->matrizAdyacencia[i]->origen->especialidad;
+		int pacientesMaximos = g->matrizAdyacencia[i]->origen->pacientesMaximos;
+		int pacientesActuales = g->matrizAdyacencia[i]->origen->pacientesActuales;
+		printf("Nombre: %s ; Especialidad: %s ; Capacidad maxima: %d ; Pacientes actuales %d", 
+			nombre, especialidad, pacientesMaximos, pacientesActuales);
+		printf("\n");
+	}
+}
 /*
  * Evalua el camino mas corto hasta v, lo reemplaza por u-v en caso de ser mejorado.
  * Entradas: Nodo* u -> nodo inicio.
@@ -248,9 +266,10 @@ ListaAdyacencia* extractMin(ListaAdyacencia** matrizAdyacencia, int largo){
 	}
 	#pragma endregion
 	// Reordenamos el arreglo
+
 	for (i = indexMin; i < largo-1; i++){
-		//matrizAdyacencia[i] = &*matrizAdyacencia[i+1];
-		matrizAdyacencia[i] = matrizAdyacencia[i+1];
+		matrizAdyacencia[i] = &*matrizAdyacencia[i+1];
+		//matrizAdyacencia[i] = matrizAdyacencia[i+1];
 	}
 
 	// Si el arreglo poseía un elemento, liberar la memoria y devolver ese elemento
@@ -260,9 +279,8 @@ ListaAdyacencia* extractMin(ListaAdyacencia** matrizAdyacencia, int largo){
 	}
 
 	// Sino, realocar la memoria
-	matrizAdyacencia = realloc(matrizAdyacencia, sizeof(ListaAdyacencia*)*(largo-1));
-	ListaAdyacencia* test = matrizAdyacencia[2];
-	ListaAdyacencia* test2 = test;
+	//ListaAdyacencia** temp = realloc(matrizAdyacencia, sizeof(ListaAdyacencia*)*(largo-1));
+	//matrizAdyacencia = temp;
 	return min;
 }
 
@@ -474,7 +492,7 @@ void menu(){
                     break;
 
             case 2: if (registroCargado == 1){
-                        imprimirGrafo(g);
+                        imprimirConsultorios(g);
 						printf("\n");
                     } else {
                         printf("No existe registro en el programa. Por favor cargue uno.\n\n");
@@ -504,6 +522,7 @@ void menu(){
 								free(especialidadRequerida);
 							} else {
 								escribirRuta(g, destino, pathCamino);
+								printf("\n");
 								free(nombreConsultorio);
 								free(especialidadRequerida);
 							}
@@ -569,5 +588,6 @@ void liberarGrafo(Grafo* g){
 		}
 		free(g->matrizAdyacencia[i]);
 	}
+	free(g->matrizAdyacencia);
 	free(g);
 }

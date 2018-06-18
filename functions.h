@@ -8,6 +8,7 @@ void agregarAdyacente(Grafo* g, char* consultorioOrigen, char* consultorioAdyace
 Grafo* leerGrafo(char* path, char* pathAristas);
 void imprimirAdyacentes(ListaAdyacencia* lista);
 void imprimirGrafo(Grafo* g);
+void imprimirConsultorios(Grafo* g);
 void relax(Nodo* u, Nodo* v, int tiempo);
 ListaAdyacencia* extractMin(ListaAdyacencia** matrizAdyacencia, int largo);
 Nodo* ingresarPaciente(Grafo* g, Nodo* s, char* especialidad);
